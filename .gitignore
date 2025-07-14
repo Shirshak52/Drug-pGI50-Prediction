@@ -1,0 +1,69 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+*.env
+.env
+pip-log.txt
+pip-delete-this-directory/
+.tox/
+.coverage
+.pytest_cache/
+htmlcov/
+.ipynb_checkpoints/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.idea/ # For PyCharm/IntelliJ users
+
+# Jupyter Notebook specific
+.ipynb_checkpoints/
+*.ipynb_checkpoints/
+# Jupyter Lab state
+.jupyter_lab/
+
+# Data
+*.csv
+*.tsv
+*.xlsx
+*.parquet
+*.feather
+*.hdf5
+*.json
+*.pkl
+*.zip
+data/
+raw/
+processed/
+
+# Machine Learning specific
+# Saved models
+*.joblib
+*.pkl
+*.h5
+*.pth # PyTorch models
+*.pt  # PyTorch models
+*.bin # XGBoost/LightGBM binary models
+*.model # XGBoost native model format
+*.json # XGBoost JSON model format
+*.ubj # XGBoost UBJSON model format
+models/
+
+# Logs
+*.log
+logs/
+
+# Database files (like your Optuna SQLite DB)
+*.db
+*.sqlite
+*.sqlite3
+studies/
+
+# Operating System Files
+.DS_Store # macOS
+Thumbs.db # Windows
+desktop.ini # Windows
