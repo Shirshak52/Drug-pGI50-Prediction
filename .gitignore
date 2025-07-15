@@ -36,28 +36,28 @@ htmlcov/
 *.json
 *.pkl
 *.zip
-data/
-raw/
-processed/
+data/features/
+data/raw/
+data/processed/
 
 # Machine Learning specific
 # Saved models
-*.joblib
-*.pkl
+# *.joblib
+# *.pkl
 *.h5
-*.pth # PyTorch models
-*.pt  # PyTorch models
+# *.pth # PyTorch models
+# *.pt  # PyTorch models
 *.bin # XGBoost/LightGBM binary models
 *.model # XGBoost native model format
 *.json # XGBoost JSON model format
 *.ubj # XGBoost UBJSON model format
-models/
+# models/
 
 # Logs
 *.log
 logs/
 
-# Database files (like your Optuna SQLite DB)
+# Database files
 *.db
 *.sqlite
 *.sqlite3
