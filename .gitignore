@@ -59,10 +59,10 @@ data/splits/pyg_data_graphs/
 logs/
 
 # Database files
-*.db
-*.sqlite
-*.sqlite3
-studies/
+# *.db
+# *.sqlite
+# *.sqlite3
+# studies/
 
 # Operating System Files
 .DS_Store # macOS
