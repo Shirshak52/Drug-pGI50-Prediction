@@ -68,7 +68,7 @@ Follow these steps to set up the project environment and run the notebooks:
 1.  **Clone the repository:**
 
     ```bash
-    git clone https://github.com/Shirshak52/Drug-GI50-Prediction.git
+    git clone https://github.com/Shirshak52/Drug-pGI50-Prediction.git
     cd Drug-GI50-Prediction
     ```
 
