@@ -39,7 +39,7 @@ htmlcov/
 data/features/
 data/raw/
 data/processed/
-data/splits/pyg_data_graphs/
+data/pyg_data_graphs/
 
 # Machine Learning specific
 # Saved models
