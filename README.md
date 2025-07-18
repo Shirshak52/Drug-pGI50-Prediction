@@ -14,7 +14,7 @@ This repository demonstrates a complete end-to-end machine learning pipeline, fr
 
 ## Key Features
 
--   **Data-Driven Approach:** Utilizes publicly available molecular activity data from ChEMBL.
+-   **Data-Driven Approach:** Utilizes publicly available molecular activity [data from ChEMBL](https://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBLdb/latest/).
 -   **Comprehensive Feature Engineering:** Explores both traditional RDKit descriptors/fingerprints and graph-based representations.
 -   **Diverse Modeling Strategies:** Implements:
     -   **XGBoost:** A powerful gradient boosting framework for tabular data.
