@@ -14,7 +14,7 @@ This repository demonstrates a complete end-to-end machine learning pipeline, fr
 
 ## Key Features
 
--   **Data-Driven Approach:** Utilizes publicly available molecular activity data from ChEMBL.
+-   **Data-Driven Approach:** Utilizes publicly available molecular activity [data from ChEMBL](https://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBLdb/latest/).
 -   **Comprehensive Feature Engineering:** Explores both traditional RDKit descriptors/fingerprints and graph-based representations.
 -   **Diverse Modeling Strategies:** Implements:
     -   **XGBoost:** A powerful gradient boosting framework for tabular data.
@@ -68,7 +68,7 @@ Follow these steps to set up the project environment and run the notebooks:
 1.  **Clone the repository:**
 
     ```bash
-    git clone https://github.com/Shirshak52/Drug-GI50-Prediction.git
+    git clone https://github.com/Shirshak52/Drug-pGI50-Prediction.git
     cd Drug-GI50-Prediction
     ```
 
