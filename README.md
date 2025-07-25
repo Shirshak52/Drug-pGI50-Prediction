@@ -65,43 +65,96 @@ The repository is organized into the following main directories and notebooks:
 
 Follow these steps to set up the project environment and run the notebooks:
 
-1.  **Clone the repository:**
+### 1.  **Clone the repository:**
 
+```bash
+git clone [https://github.com/Shirshak52/Drug-pGI50-Prediction.git](https://github.com/Shirshak52/Drug-pGI50-Prediction.git)
+
+cd Drug-pGI50-Prediction
+```
+
+### 2.  **Create a virtual environment:**
+
+```bash
+python -m venv venv
+
+# On Windows
+.\venv\Scripts\activate
+
+# On macOS/Linux
+source venv/bin/activate
+```
+
+### 3.  **Install dependencies:**
+
+```bash
+pip install -r requirements.txt
+```
+
+**Note on Specific Library Installations:**  
+Some libraries, particularly RDKit, PyTorch, and PyTorch Geometric, can sometimes present unique installation challenges due to their dependencies (e.g., CUDA versions, specific `conda` requirements, etc.). If you encounter any issues during `pip install -r`, please refer to the official documentation for:
+
+-   [RDKit Installation Guide](https://www.rdkit.org/docs/Install.html)
+-   [PyTorch Installation Guide](https://pytorch.org/get-started/locally/)
+-   [PyTorch Geometric Installation Guide](https://pytorch-geometric.readthedocs.io/en/2.6.1/install/installation.html)
+
+### 4. **Install external dependencies (for high-resolution molecular visualization):**  
+Some external, system-level dependencies must be installed that are used for high-quality plots with crisp molecular images and properly formatted text (such as inline bolding)
+
+#### 4.1. For Crisp Molecule Images (via `cairosvg`):
+The `cairosvg` Python library relies on the **Cairo graphics library**.
+
+* **Windows:**
+    The most reliable way to get Cairo and its dependencies is often by using [MSYS2](https://www.msys2.org/).
+    1.  Download and install MSYS2.
+    2.  Open an MSYS2 MinGW 64-bit terminal.
+    3.  Install GTK3 (which includes Cairo): `pacman -S mingw-w64-x86_64-gtk3`
+
+    Alternatively, you can try direct GTK+ Runtime installers (e.g., from [gtkd.org/download.html](https://gtkd.org/download.html) for GTK+ 3.24.8 runtime, or the [GTK+ for Windows Runtime Environment Installer GitHub fork](https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer)). Ensure the installation directory's `bin` folder is added to your system's PATH.
+
+* **macOS:**
+    Install Cairo via Homebrew (if you don't have Homebrew, install it first from [brew.sh](https://brew.sh/)):
     ```bash
-    git clone https://github.com/Shirshak52/Drug-pGI50-Prediction.git
-    cd Drug-GI50-Prediction
+    brew install cairo
+    # GTK3 is often implicitly installed or needed for full Cairo functionality:
+    # brew install gtk+3
     ```
 
-2.  **Create a virtual environment (recommended):**
-
+* **Linux (Debian/Ubuntu-based):**
+    Install the Cairo development libraries:
     ```bash
-    python -m venv venv
-
-    # On Windows
-    .\venv\Scripts\activate
-
-    # On macOS/Linux
-    source venv/bin/activate
+    sudo apt-get update
+    sudo apt-get install libcairo2-dev libgirepository1.0-dev
     ```
+    For other Linux distributions (e.g., Fedora/RHEL), use your distribution's package manager (e.g., `dnf install cairo-devel gobject-introspection-devel`).
 
-3.  **Install dependencies:**
+#### 4.2. For Formatted Text and Inline Bolding (via LaTeX):
+Matplotlib uses a LaTeX distribution to render complex text and inline formatting (like bolding) when `usetex` is enabled.
 
+* **Windows:**
+    Install [MiKTeX](https://miktex.org/download). Choose the "Basic Installer." During installation, ensure it's added to your system's PATH. After the initial installation, MiKTeX should automatically prompt to install necessary packages, or you may need to manually update packages (e.g., `type1cm`, `textcomp`, `underscore`) via the MiKTeX Console.
+
+* **macOS:**
+    Install [MacTeX](https://www.tug.org/mactex/) (a comprehensive distribution) or [BasicTeX](https://www.tug.org/mactex/morepackages.html) (a smaller distribution, then install additional packages as needed). After installation, ensure its `bin` directory is in your system's PATH.
+
+* **Linux:**
+    Install [TeX Live](https://www.tug.org/texlive/acquire-linux.html). The most straightforward way is often through your distribution's package manager (a full install is usually recommended for simplicity with Matplotlib):
     ```bash
-    pip install -r requirements.txt
+    # For Debian/Ubuntu-based systems
+    sudo apt-get update
+    sudo apt-get install texlive-full dvipng
+    # If 'texlive-full' is too large, you can try 'texlive-base'
+    # and then manually install packages like 'texlive-latex-extra',
+    # 'texlive-fonts-recommended', 'texlive-pictures', and ensure 'dvipng'
+    # or 'dvisvgm' is installed for Matplotlib's image conversion.
     ```
+    For other Linux distributions, use their respective package managers (e.g., `sudo dnf install texlive-scheme-full texlive-dvipng` for Fedora/RHEL).
 
-    **Note on Specific Library Installations:**  
-    Some libraries, particularly RDKit, PyTorch, and PyTorch Geometric, can sometimes present unique installation challenges due to their dependencies (e.g., CUDA versions, specific `conda` requirements, etc.). If you encounter any issues during `pip install -r`, please refer to the official documentation for:
-
-    -   [RDKit Installation Guide](https://www.rdkit.org/docs/Install.html)
-    -   [PyTorch Installation Guide](https://pytorch.org/get-started/locally/)
-    -   [PyTorch Geometric Installation Guide](https://pytorch-geometric.readthedocs.io/en/2.6.1/install/installation.html)
-
-4.  **Run Jupyter Notebooks:**
-    ```bash
-    jupyter notebook
-    ```
-    Navigate to the `notebooks/` directory and execute the notebooks in sequential order (00 to 06). Each notebook builds upon the outputs of the previous ones.
+### 5.  **Run Jupyter Notebooks:**
+```bash
+jupyter notebook
+```
+Navigate to the `notebooks/` directory and execute the notebooks in sequential order (00 to 06). Each notebook builds upon the outputs of the previous ones.
 
 ## Results and Conclusion
 
