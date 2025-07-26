@@ -6,7 +6,7 @@ This project focuses on developing and comparing machine learning models for pre
 
 $$pGI50 = -\log_{10}(\text{GI50 in Molars (M)})$$
 
-where `GI50` is **_the amount of a drug required to inhibit the growth of cancer cells by 50%_**. **Lower `GI50` values (and conversely, HIGHER `pGI50` values) indicate more potency** as the drug is required in comparatively lower amounts.
+where `GI50` is **_the concentration of a drug required to inhibit the growth of cancer cells by 50%_**. **Lower `GI50` values (and conversely, HIGHER `pGI50` values) indicate more potency** as the drug is required in comparatively lower amounts.
 
 The central hypothesis explored is whether models explicitly designed to leverage the inherent **graph structure of molecular data (Graph Neural Networks - GNNs)** offer a significant advantage over more generalized machine learning approaches (XGBoost and Multi-Layer Perceptrons - MLPs) that rely on engineered tabular features.
 
@@ -68,7 +68,7 @@ Follow these steps to set up the project environment and run the notebooks:
 ### 1.  **Clone the repository:**
 
 ```bash
-git clone [https://github.com/Shirshak52/Drug-pGI50-Prediction.git](https://github.com/Shirshak52/Drug-pGI50-Prediction.git)
+git clone https://github.com/Shirshak52/Drug-pGI50-Prediction.git
 
 cd Drug-pGI50-Prediction
 ```
