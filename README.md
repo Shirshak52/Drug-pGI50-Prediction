@@ -23,7 +23,7 @@ This repository demonstrates a complete end-to-end machine learning pipeline, fr
 -   **Hyperparameter Optimization:** Utilizes Optuna for systematic and efficient tuning of all model architectures.
 -   **Rigorous Evaluation:** Compares models based on standard regression metrics (RMSE, R2) on an unseen test set.
 -   **Reproducibility:** Project setup includes environment configurations and Git commit hash tracking for models.
--   **Modular Codebase:** Organized into clear Jupyter notebooks and a `src` directory for custom MLP and GNN class architetures.
+-   **Modular Codebase:** Organized into clear Jupyter notebooks and a `src` directory for custom MLP and GNN class architectures.
 
 ## Project Structure
 
@@ -99,7 +99,7 @@ Some libraries, particularly RDKit, PyTorch, and PyTorch Geometric, can sometime
 -   [PyTorch Geometric Installation Guide](https://pytorch-geometric.readthedocs.io/en/2.6.1/install/installation.html)
 
 ### 4. **Install external dependencies (for high-resolution molecular visualization):**  
-Some external, system-level dependencies must be installed that are used for high-quality plots with crisp molecular images and properly formatted text (such as inline bolding)
+Some external, system-level dependencies must be installed that are used for high-quality plots with crisp molecular images and properly formatted text (such as inline bolding).
 
 #### 4.1. For Crisp Molecule Images (via `cairosvg`):
 The `cairosvg` Python library relies on the **Cairo graphics library**.
@@ -166,9 +166,9 @@ The comparative analysis revealed insightful findings regarding the strengths of
 | MLP     | 0.6408 | 0.5715 |
 | GNN     | 0.6114 | 0.6100 |
 
-The **Graph Neural Network (GNN) model emerged as the top performer**, achieving the lowest RMSE (0.6114) and the highest R2 score (0.6100) on the unseen test data. This result strongly supports the hypothesis that models specifically designed to leverage the inherent graph structure of molecular data can offer a distinct advantage in property prediction. By directly processing atom-bond connectivity, GNNs effectively capture complex relational patterns that are more challenging for generalized models relying on flattened feature vectors.
+The **Graph Neural Network (GNN) model emerged as the top performer**, achieving the lowest RMSE (`0.6114`) and the highest R2 score (`0.6100`) on the unseen test data. This result strongly supports the hypothesis that models specifically designed to leverage the inherent graph structure of molecular data can offer a distinct advantage in property prediction. By directly processing atom-bond connectivity, GNNs effectively capture complex relational patterns that are more challenging for generalized models relying on flattened feature vectors.
 
-While the Multi-Layer Perceptron (MLP) also demonstrated strong performance (RMSE 0.6408, R2 0.5715), outperforming the XGBoost model (RMSE 0.6957, R2 0.4951), the GNN's consistent edge highlights the power of its inherent bias for graph-structured data. This approach is particularly promising for generalization to new/unseen chemical entities, where handcrafted tabular features might not fully capture the relevant structural nuances.
+While the Multi-Layer Perceptron (MLP) also demonstrated strong performance (RMSE `0.6408`, R2 `0.5715`), outperforming the XGBoost model (RMSE `0.6957`, R2 `0.4951`), the GNN's consistent edge highlights the power of its inherent bias for graph-structured data. This approach is particularly promising for generalization to new/unseen chemical entities, where handcrafted tabular features might not fully capture the relevant structural nuances.
 
 ## Future Work
 
