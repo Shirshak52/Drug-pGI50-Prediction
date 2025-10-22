@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch_geometric.nn as pyg_nn
-from torch_geometric.nn import global_mean_pool  # For graph-level readout
+from torch_geometric.nn.aggr import AttentionalAggregation  # For graph-level readout
 
 
 class GNN(nn.Module):
@@ -29,6 +29,10 @@ class GNN(nn.Module):
         for _ in range(num_layers - 1):
             self.convs.append(pyg_nn.SAGEConv(hidden_channels, hidden_channels))
 
+        # Initialize Global Attention Pool
+        # GAP takes the node embedding size (hidden_channels) as input
+        self.pool = AttentionalAggregation(gate_nn=nn.Linear(hidden_channels, 1))
+
         # Fully connected layers for the final prediction
         # The input to the first FC layer combines:
         # 1. Output from the GNN (after pooling) -> hidden_channels
@@ -36,10 +40,10 @@ class GNN(nn.Module):
         self.fc1 = nn.Linear(hidden_channels + global_feature_dim, hidden_channels // 2)
         self.fc2 = nn.Linear(hidden_channels // 2, 1)  # Output is a single pGI50 value
 
-        # Batch Normalization
+        # Layer Normalization
         self.bns = nn.ModuleList()
         for _ in range(num_layers):
-            self.bns.append(nn.BatchNorm1d(hidden_channels))
+            self.bns.append(nn.LayerNorm(hidden_channels))
 
     def forward(self, data):
         x, edge_index, batch = data.x, data.edge_index, data.batch
@@ -62,8 +66,8 @@ class GNN(nn.Module):
             )  # Dropout for regularization
 
         # Readout layer: Aggregate node embeddings to a single graph embedding
-        # global_mean_pool computes the mean of node features for each graph in the batch
-        x = global_mean_pool(x, batch)
+        # Global Attention Pool applies learned attention scores to atom embeddings
+        x = self.pool(x, batch)
 
         # Concatenate graph embedding with global features
         current_batch_size = x.shape[0]
