@@ -9,6 +9,7 @@ class GNN(nn.Module):
     def __init__(
         self,
         node_feature_dim,
+        edge_feature_dim,
         global_feature_dim,
         hidden_channels,
         num_layers,
@@ -17,60 +18,90 @@ class GNN(nn.Module):
         super(GNN, self).__init__()
         self.num_layers = num_layers
         self.node_feature_dim = node_feature_dim
+        self.edge_feature_dim = edge_feature_dim
         self.global_feature_dim = global_feature_dim
         self.dropout_rate = dropout_rate
+
+        attention_heads = 4
+        concat_dim = hidden_channels * attention_heads
 
         # GNN convolutional layers
         # Use nn.ModuleList to hold multiple layers
         self.convs = nn.ModuleList()
-        # First layer: input node_feature_dim to hidden_channels
-        self.convs.append(pyg_nn.SAGEConv(node_feature_dim, hidden_channels))
-        # Subsequent layers: hidden_channels to hidden_channels
+
+        # First layer: input node_feature_dim to hidden_channels (output concat_dim)
+        self.convs.append(
+            pyg_nn.GATv2Conv(
+                node_feature_dim,
+                hidden_channels,
+                edge_dim=edge_feature_dim,
+                heads=attention_heads,
+                concat=True,
+            )
+        )
+
+        # Subsequent layers: concat_dim to hidden_channels (output concat_dim)
         for _ in range(num_layers - 1):
-            self.convs.append(pyg_nn.SAGEConv(hidden_channels, hidden_channels))
+            self.convs.append(
+                pyg_nn.GATv2Conv(
+                    concat_dim,
+                    hidden_channels,
+                    edge_dim=edge_feature_dim,
+                    heads=attention_heads,
+                    concat=True,
+                )
+            )
 
-        # Initialize Global Attention Pool
-        # GAP takes the node embedding size (hidden_channels) as input
-        self.pool = AttentionalAggregation(gate_nn=nn.Linear(hidden_channels, 1))
-
-        # Fully connected layers for the final prediction
-        # The input to the first FC layer combines:
-        # 1. Output from the GNN (after pooling) -> hidden_channels
-        # 2. Global features -> global_feature_dim
-        self.fc1 = nn.Linear(hidden_channels + global_feature_dim, hidden_channels // 2)
-        self.fc2 = nn.Linear(hidden_channels // 2, 1)  # Output is a single pGI50 value
-
-        # Layer Normalization
+        # Layer Normalization Layers
         self.bns = nn.ModuleList()
         for _ in range(num_layers):
-            self.bns.append(nn.LayerNorm(hidden_channels))
+            self.bns.append(nn.LayerNorm(concat_dim))
+
+        # Initialize Attentional Aggregation (Readout/Pooling Layer)
+        # It takes the concat_dim size as input
+        self.pool = AttentionalAggregation(gate_nn=nn.Linear(concat_dim, 1))
+
+        # Fully connected layers for the final prediction
+        # The input to the first FC layer combines concat_dim + global_feature_dim
+        # i.e. concatenates GNN output with global molecular features to form combined dataset
+        self.fc1 = nn.Linear(concat_dim + global_feature_dim, concat_dim // 2)
+        self.fc2 = nn.Linear(concat_dim // 2, 1)  # Output is a single pGI50 value
 
     def forward(self, data):
-        x, edge_index, batch = data.x, data.edge_index, data.batch
+        x, edge_index, edge_attr, batch = (
+            data.x,
+            data.edge_index,
+            data.edge_attr,
+            data.batch,
+        )
         global_features = (
             data.global_features
         )  # Access the global features stored in the Data object
 
-        # Ensure node features (x) are float
+        # Ensure node features (x) and edge features (edge_attr) are float
         x = x.float()
+        edge_attr = edge_attr.float()
 
         # Apply GNN convolutional layers
         for i, conv in enumerate(self.convs):
-            x = conv(x, edge_index)
-            # Apply BatchNorm after convolution
+            x = conv(x, edge_index, edge_attr)
+
+            # Apply LayerNorm after convolution
             if self.bns[i] is not None:
                 x = self.bns[i](x)
+
             x = F.relu(x)
             x = F.dropout(
                 x, p=self.dropout_rate, training=self.training
             )  # Dropout for regularization
 
         # Readout layer: Aggregate node embeddings to a single graph embedding
-        # Global Attention Pool applies learned attention scores to atom embeddings
+        # Attentional Aggregation applies learned attention scores to atom embeddings
         x = self.pool(x, batch)
 
         # Concatenate graph embedding with global features
         current_batch_size = x.shape[0]
+
         # Ensure global_features is float and has the correct shape for concatenation
         # Reshape global_features to (current_batch_size, global_feature_dim)
         global_features = global_features.float().view(
