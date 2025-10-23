@@ -56,6 +56,9 @@ class GNN(nn.Module):
         # Fully connected layers for the final prediction
         # concatenates GNN output with global molecular features to form combined dataset
         self.fc1 = nn.Linear(hidden_channels + global_feature_dim, hidden_channels // 2)
+        self.bn1 = nn.BatchNorm1d(
+            hidden_channels // 2
+        )  # BatchNorm for the final FCN layers
         self.fc2 = nn.Linear(hidden_channels // 2, 1)  # Output is a single pGI50 value
 
     def forward(self, data):
@@ -75,13 +78,18 @@ class GNN(nn.Module):
 
         # Apply GNN convolutional layers
         for i, conv in enumerate(self.convs):
+            identity = x  # Store the input for residual connection
             x = conv(x, edge_index, edge_attr)
+            x = F.relu(x)
+
+            # Add residual connection if not first layer (dimensions match)
+            if i > 0:  # Skip first layer as dimensions differ
+                x = x + identity
 
             # Apply LayerNorm after convolution
             if self.layer_norms[i] is not None:
                 x = self.layer_norms[i](x)
 
-            x = F.relu(x)
             x = F.dropout(
                 x, p=self.dropout_rate, training=self.training
             )  # Dropout for regularization
@@ -104,6 +112,7 @@ class GNN(nn.Module):
 
         # Apply fully connected layers for regression
         x = self.fc1(x)
+        x = self.bn1(x)
         x = F.relu(x)
         x = self.fc2(x)  # Final output for regression
 
