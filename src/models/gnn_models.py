@@ -14,7 +14,6 @@ class GNN(nn.Module):
         hidden_channels,
         num_layers,
         dropout_rate,
-        attention_heads,
     ):
         super(GNN, self).__init__()
         self.num_layers = num_layers
@@ -23,49 +22,41 @@ class GNN(nn.Module):
         self.global_feature_dim = global_feature_dim
         self.dropout_rate = dropout_rate
 
-        concat_dim = hidden_channels * attention_heads
-
-        # GNN convolutional layers
+        # GNN layer lists
         # Use nn.ModuleList to hold multiple layers
-        self.convs = nn.ModuleList()
-
-        # First layer: input node_feature_dim to hidden_channels (output concat_dim)
-        self.convs.append(
-            pyg_nn.GATv2Conv(
-                node_feature_dim,
-                hidden_channels,
-                edge_dim=edge_feature_dim,
-                heads=attention_heads,
-                concat=True,
-            )
-        )
-
-        # Subsequent layers: concat_dim to hidden_channels (output concat_dim)
-        for _ in range(num_layers - 1):
-            self.convs.append(
-                pyg_nn.GATv2Conv(
-                    concat_dim,
-                    hidden_channels,
-                    edge_dim=edge_feature_dim,
-                    heads=attention_heads,
-                    concat=True,
-                )
-            )
-
+        self.convs = nn.ModuleList()  # Convolutional Layers
         # Layer Normalization Layers
-        self.bns = nn.ModuleList()
-        for _ in range(num_layers):
-            self.bns.append(nn.LayerNorm(concat_dim))
+        self.layer_norms = nn.ModuleList()
+
+        # First convolutional layer
+        edge_nn_1 = nn.Sequential(
+            nn.Linear(edge_feature_dim, hidden_channels * node_feature_dim),
+            nn.ReLU(),
+        )
+        self.convs.append(
+            pyg_nn.NNConv(node_feature_dim, hidden_channels, edge_nn_1, aggr="mean")
+        )
+        self.layer_norms.append(pyg_nn.LayerNorm(hidden_channels))
+
+        # Hidden layers
+        for _ in range(num_layers - 1):
+            edge_nn = nn.Sequential(
+                nn.Linear(edge_feature_dim, hidden_channels * hidden_channels),
+                nn.ReLU(),
+            )
+            self.convs.append(
+                pyg_nn.NNConv(hidden_channels, hidden_channels, edge_nn, aggr="mean")
+            )
+            self.layer_norms.append(pyg_nn.LayerNorm(hidden_channels))
 
         # Initialize Attentional Aggregation (Readout/Pooling Layer)
         # It takes the concat_dim size as input
-        self.pool = AttentionalAggregation(gate_nn=nn.Linear(concat_dim, 1))
+        self.pool = AttentionalAggregation(gate_nn=nn.Linear(hidden_channels, 1))
 
         # Fully connected layers for the final prediction
-        # The input to the first FC layer combines concat_dim + global_feature_dim
-        # i.e. concatenates GNN output with global molecular features to form combined dataset
-        self.fc1 = nn.Linear(concat_dim + global_feature_dim, concat_dim // 2)
-        self.fc2 = nn.Linear(concat_dim // 2, 1)  # Output is a single pGI50 value
+        # concatenates GNN output with global molecular features to form combined dataset
+        self.fc1 = nn.Linear(hidden_channels + global_feature_dim, hidden_channels // 2)
+        self.fc2 = nn.Linear(hidden_channels // 2, 1)  # Output is a single pGI50 value
 
     def forward(self, data):
         x, edge_index, edge_attr, batch = (
@@ -87,8 +78,8 @@ class GNN(nn.Module):
             x = conv(x, edge_index, edge_attr)
 
             # Apply LayerNorm after convolution
-            if self.bns[i] is not None:
-                x = self.bns[i](x)
+            if self.layer_norms[i] is not None:
+                x = self.layer_norms[i](x)
 
             x = F.relu(x)
             x = F.dropout(
