@@ -14,6 +14,7 @@ class GNN(nn.Module):
         hidden_channels,
         num_layers,
         dropout_rate,
+        attention_heads,
     ):
         super(GNN, self).__init__()
         self.num_layers = num_layers
@@ -22,7 +23,6 @@ class GNN(nn.Module):
         self.global_feature_dim = global_feature_dim
         self.dropout_rate = dropout_rate
 
-        attention_heads = 4
         concat_dim = hidden_channels * attention_heads
 
         # GNN convolutional layers
