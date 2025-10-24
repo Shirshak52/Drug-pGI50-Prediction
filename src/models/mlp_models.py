@@ -1,18 +1,21 @@
 import torch.nn as nn
 
-class MLP(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size):
-        super(MLP, self).__init__()
-        
-        # First linear layer with ReLU activation
-        self.fc1 = nn.Linear(input_size, hidden_size)
-        self.relu1 = nn.ReLU()
 
-        # Output layer (no activation for regression tasks, as pGI50 can be any real number)
-        self.fc2 = nn.Linear(hidden_size, output_size)
+class MLP(nn.Module):
+    def __init__(self, input_size, hidden_size, num_layers):
+        super(MLP, self).__init__()
+
+        layers = []
+        layers.append(nn.Linear(input_size, hidden_size))
+        layers.append(nn.ReLU())
+
+        for _ in range(num_layers - 2):
+            layers.append(nn.Linear(hidden_size, hidden_size))
+            layers.append(nn.ReLU())
+
+        layers.append(nn.Linear(hidden_size, 1))  # Outputs 1 single pGI50 value
+        self.fc_layers = nn.Sequential(*layers)
 
     def forward(self, x):
-        out = self.fc1(x)
-        out = self.relu1(out)
-        out = self.fc2(out) # Output layer directly gives regression value
+        out = self.fc_layers(x)  # Output layer directly gives regression value
         return out
