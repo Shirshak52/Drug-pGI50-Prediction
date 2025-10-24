@@ -55,11 +55,24 @@ class GNN(nn.Module):
 
         # Fully connected layers for the final prediction
         # concatenates GNN output with global molecular features to form combined dataset
-        self.fc1 = nn.Linear(hidden_channels + global_feature_dim, hidden_channels // 2)
-        self.bn1 = nn.BatchNorm1d(
-            hidden_channels // 2
-        )  # BatchNorm for the final FCN layers
-        self.fc2 = nn.Linear(hidden_channels // 2, 1)  # Output is a single pGI50 value
+        self.fc_layers = nn.Sequential(
+            # FCN1
+            nn.Linear(hidden_channels + global_feature_dim, hidden_channels),
+            nn.BatchNorm1d(hidden_channels),
+            nn.ReLU(),
+            nn.Dropout(dropout_rate),
+            # FCN2
+            nn.Linear(hidden_channels, hidden_channels // 2),
+            nn.BatchNorm1d(hidden_channels // 2),
+            nn.ReLU(),
+            nn.Dropout(dropout_rate),
+            # FCN3
+            nn.Linear(hidden_channels // 2, hidden_channels // 4),
+            nn.BatchNorm1d(hidden_channels // 4),
+            nn.ReLU(),
+            # FCN4 - Output Layer
+            nn.Linear(hidden_channels // 4, 1),  # Single pGI50 output
+        )
 
     def forward(self, data):
         x, edge_index, edge_attr, batch = (
@@ -111,9 +124,6 @@ class GNN(nn.Module):
         )  # Concatenate along the feature dimension
 
         # Apply fully connected layers for regression
-        x = self.fc1(x)
-        x = self.bn1(x)
-        x = F.relu(x)
-        x = self.fc2(x)  # Final output for regression
+        x = self.fc_layers(x)  # Final output for regression
 
         return x
