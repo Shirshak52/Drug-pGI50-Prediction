@@ -22,19 +22,39 @@ class GNN(nn.Module):
         self.global_feature_dim = global_feature_dim
         self.dropout_rate = dropout_rate
 
+        # Compress global features to match the size of hidden_channels (late fusion)
+        # GNN layers output hidden_channels size,
+        # so global features also need to be compressed to the same size
+        self.late_fusion_global_features_compressor = nn.Sequential(
+            nn.Linear(global_feature_dim, hidden_channels * 2),
+            nn.BatchNorm1d(hidden_channels * 2),
+            nn.ReLU(),
+            nn.Dropout(dropout_rate),
+            nn.Linear(
+                hidden_channels * 2, hidden_channels
+            ),  # Output size: hidden_channels
+        )
+
+        # Calculate input dimension for first layer for early fusion (atom + global features)
+        # Early fusion meaning:
+        # * Each molecule has 1 row of global features
+        # * Each atom in the molecule will have these global features concatenated to its own features
+        self.initial_input_dim = node_feature_dim
+
         # GNN layer lists
         # Use nn.ModuleList to hold multiple layers
         self.convs = nn.ModuleList()  # Convolutional Layers
-        # Layer Normalization Layers
-        self.layer_norms = nn.ModuleList()
+        self.layer_norms = nn.ModuleList()  # Layer Normalization Layers
 
         # First convolutional layer
         edge_nn_1 = nn.Sequential(
-            nn.Linear(edge_feature_dim, hidden_channels * node_feature_dim),
+            nn.Linear(edge_feature_dim, hidden_channels * self.initial_input_dim),
             nn.ReLU(),
         )
         self.convs.append(
-            pyg_nn.NNConv(node_feature_dim, hidden_channels, edge_nn_1, aggr="mean")
+            pyg_nn.NNConv(
+                self.initial_input_dim, hidden_channels, edge_nn_1, aggr="mean"
+            )
         )
         self.layer_norms.append(pyg_nn.LayerNorm(hidden_channels))
 
@@ -50,28 +70,29 @@ class GNN(nn.Module):
             self.layer_norms.append(pyg_nn.LayerNorm(hidden_channels))
 
         # Initialize Attentional Aggregation (Readout/Pooling Layer)
-        # It takes the concat_dim size as input
         self.pool = AttentionalAggregation(gate_nn=nn.Linear(hidden_channels, 1))
 
-        # Fully connected layers for the final prediction
+        # Fully connected layers for the final prediction (Fusion Decoder)
         # concatenates GNN output with global molecular features to form combined dataset
+        fc_input_dim = hidden_channels * 2  # GNN output + resized global features
+        fc_first_layer_output_dim = 512
         self.fc_layers = nn.Sequential(
             # FCN1
-            nn.Linear(hidden_channels + global_feature_dim, hidden_channels),
-            nn.BatchNorm1d(hidden_channels),
+            nn.Linear(fc_input_dim, fc_first_layer_output_dim),
+            nn.BatchNorm1d(fc_first_layer_output_dim),
             nn.ReLU(),
             nn.Dropout(dropout_rate),
             # FCN2
-            nn.Linear(hidden_channels, hidden_channels // 2),
-            nn.BatchNorm1d(hidden_channels // 2),
+            nn.Linear(fc_first_layer_output_dim, fc_first_layer_output_dim // 2),
+            nn.BatchNorm1d(fc_first_layer_output_dim // 2),
             nn.ReLU(),
             nn.Dropout(dropout_rate),
             # FCN3
-            nn.Linear(hidden_channels // 2, hidden_channels // 4),
-            nn.BatchNorm1d(hidden_channels // 4),
+            nn.Linear(fc_first_layer_output_dim // 2, fc_first_layer_output_dim // 4),
+            nn.BatchNorm1d(fc_first_layer_output_dim // 4),
             nn.ReLU(),
             # FCN4 - Output Layer
-            nn.Linear(hidden_channels // 4, 1),  # Single pGI50 output
+            nn.Linear(fc_first_layer_output_dim // 4, 1),  # Single pGI50 output
         )
 
     def forward(self, data):
@@ -85,9 +106,10 @@ class GNN(nn.Module):
             data.global_features
         )  # Access the global features stored in the Data object
 
-        # Ensure node features (x) and edge features (edge_attr) are float
+        # Ensure features are float
         x = x.float()
         edge_attr = edge_attr.float()
+        global_features = global_features.float()
 
         # Apply GNN convolutional layers
         for i, conv in enumerate(self.convs):
@@ -95,8 +117,8 @@ class GNN(nn.Module):
             x = conv(x, edge_index, edge_attr)
             x = F.relu(x)
 
-            # Add residual connection if not first layer (dimensions match)
-            if i > 0:  # Skip first layer as dimensions differ
+            # Residual connection (only after the first layer where dimensions may differ)
+            if i > 0 and x.shape == identity.shape:
                 x = x + identity
 
             # Apply LayerNorm after convolution
@@ -107,21 +129,14 @@ class GNN(nn.Module):
                 x, p=self.dropout_rate, training=self.training
             )  # Dropout for regularization
 
-        # Readout layer: Aggregate node embeddings to a single graph embedding
-        # Attentional Aggregation applies learned attention scores to atom embeddings
+        # Readout layer: Aggregate node embeddings to a single graph embedding (single row per molecule again)
         x = self.pool(x, batch)
 
-        # Concatenate graph embedding with global features
-        current_batch_size = x.shape[0]
+        # Compress global features to match graph embeddings size for late fusion
+        global_features = self.late_fusion_global_features_compressor(global_features)
 
-        # Ensure global_features is float and has the correct shape for concatenation
-        # Reshape global_features to (current_batch_size, global_feature_dim)
-        global_features = global_features.float().view(
-            current_batch_size, self.global_feature_dim
-        )
-        x = torch.cat(
-            [x, global_features], dim=1
-        )  # Concatenate along the feature dimension
+        # Late fusion: Concatenate GNN output with resized global features
+        x = torch.cat([x, global_features], dim=1)
 
         # Apply fully connected layers for regression
         x = self.fc_layers(x)  # Final output for regression
