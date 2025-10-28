@@ -49,9 +49,9 @@ The repository is organized into the following main directories and notebooks:
 │   ├── splits/                                     # Universal train/validation/test splits (output of notebook 02)
 │   └── pyg_data_graphs/                            # PyTorch Geometric Data graph objects (output of notebook 05)
 ├── models/
-│   ├── gnn/                                        # Trained GNN model state dict (.pt)
-│   ├── mlp/                                        # Trained MLP model state dict (.pt)
-│   └── xgb/                                        # Trained XGBoost model (.joblib)
+│   ├── gnn/                                        # Trained GNN model metadata dict (.pt)
+│   ├── mlp/                                        # Trained MLP model metadata dict (.pt)
+│   └── xgb/                                        # Trained XGBoost model metadata dict (.joblib)
 ├── studies/
 │   ├── gnn_study/                                  # GNN Optuna study database
 │   ├── mlp_study/                                  # MLP Optuna study database
@@ -158,28 +158,27 @@ Navigate to the `notebooks/` directory and execute the notebooks in sequential o
 
 ## Results and Conclusion
 
-The comparative analysis revealed insightful findings regarding the strengths of different modeling approaches for `pGI50` prediction:
+The comparative analysis revealed insightful findings regarding the strengths of different modeling approaches for `pGI50` prediction.
 
 The following table summarizes the test set performance for each model:
 
 | Model                         | RMSE       | R2          |
 | :---------------------------- | :--------- | :---------- |
-| **True Statistical Baseline** | **0.9796** | **-0.0011** |
-| XGBoost                       | 0.6957     | 0.4951      |
-| MLP                           | 0.6408     | 0.5715      |
-| **GNN**                       | **0.6114** | **0.6100**  |
+| **True Statistical Baseline** | **0.9878** | **-0.0002** |
+| **XGBoost**                   | **0.5781** | **0.6575**  |
+| MLP                           | 0.6004     | 0.6305      |
+| GNN                           | 0.6079     | 0.6212      |
 
-This analysis establishes the **True Statistical Baseline (RMSE: 0.9796)** as the minimum performance floor, validating the machine learning approach. The **Graph Neural Network (GNN) model emerged as the top performer**, achieving the lowest **RMSE (0.6114)** and highest **R2 score (0.6100)**, representing a nearly ***38% reduction in error*** compared to the baseline prediction. Furthermore, the GNN outperformed the next-best model, the **MLP (RMSE: 0.6408)**, proving the *necessity of leveraging molecular graph structure for achieving expert-level drug `pGI50` prediction accuracy*.
+This analysis establishes the **True Statistical Baseline (RMSE: 0.9878)** as the performance floor, validating the machine learning approach. The **XGBoost model emerged as the top performer**, achieving the lowest **RMSE (0.5781)** (and highest **R2 score (0.6575)**), representing a ***41.48% reduction in error*** compared to the baseline.
 
-While the Multi-Layer Perceptron (MLP) also demonstrated strong performance (RMSE `0.6408`, R2 `0.5715`), outperforming the XGBoost model (RMSE `0.6957`, R2 `0.4951`), the GNN's consistent edge highlights the power of its inherent bias for graph-structured data. This approach is particularly promising for generalization to new/unseen chemical entities, where handcrafted tabular features might not fully capture the relevant structural nuances.
+This result challenges the notion that GNNs are always superior for molecular property prediction; rather, it suggests that when high-quality RDKit features are available, a robust model like XGBoost can effectively maximize their utilization. The performance ceiling for the current GNN architecture appears to have been reached early in the hyperparameter search.
 
 ## Future Work
+* **Incorporating 3D Molecular Information**: The GNN's failure to gain an edge may be due to its reliance solely on 2D graph structure. Integrating 3D structural data (e.g., bond angles and distances) into the GNN input could be necessary to unlock the model's true potential.
 
--   **Explore More Advanced GNN Architectures:** Investigate more sophisticated GNN layers (e.g., attention mechanisms, message passing variants) or deeper GNN models.
--   **Incorporate 3D Molecular Information:** Integrate 3D structural data (e.g., bond angles) into the GNN input.
--   **Expand Hyperparameter Search:** Conduct more extensive hyperparameter optimization, especially for deep learning models, with broader search spaces or longer training times.
--   **Ensemble Modeling:** Develop ensemble methods that combine predictions from diverse model types (XGBoost, MLP, GNN) for potentially enhanced robustness and accuracy.
--   **Model Interpretability:** Investigate techniques to enhance the interpretability of the GNN model, providing deeper chemical insights into which molecular substructures or interactions drive the `pGI50` predictions.
+* **Exploring Advanced GNN Architectures**: Investigating more sophisticated GNN layers (e.g., attention mechanisms, message passing variants) or deeper models to potentially capture more intricate molecular patterns that existing layers missed.
+
+* **Ensemble Modeling**: Creating an ensemble that combines the high accuracy of the XGBoost model with the structural insights of the GNN could yield an overall more robust and accurate final prediction.
 
 ## License
 
