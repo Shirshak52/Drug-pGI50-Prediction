@@ -27,7 +27,7 @@ This repository demonstrates a complete end-to-end machine learning pipeline, fr
 
 ## Project Structure
 
-The repository is organized into the following main directories and notebooks:
+The repository is (locally) organized into the following main directories and notebooks:
 
 ```
 ├── notebooks/
